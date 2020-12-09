@@ -62,7 +62,7 @@ OLS is not well-suited to high dimensional data. When the number of predictors $
 
 # Dimension Reduction
 
-In the methods described so far, we have focused on feature selection and eliminating features that we decide are not significant enough for our model. However, in entirely dropping these features - however insignificant they may be - we completely miss out on any benefits these dropped variables may contribute. Instead, we could incorporate all variables strategically in order to extract as much information as possible using dimension reduction. Dimension reduction entails creating an M-dimensional subspace where M combinations are constructed as a combination of p predictors. The M combinations of predictors are then used to fit a least squares linear regression model. In order to benefit from this approach, M < p must hold. If M = p, then the resulting model amounts to using a least squares fit using all of the original predictors. We especially benefit from this approach when p (number of predictors) is large relative to n (number of observations), as using M < p can reduce the variance of the model. 
+In the methods described so far, we have focused on feature selection and eliminating features that we decide are not significant enough for our model. However, in entirely dropping these features - however insignificant they may be - we completely miss out on any benefits these dropped variables may contribute. Instead, we could incorporate all variables strategically in order to extract as much information as possible using dimension reduction. Dimension reduction entails creating an $M$-dimensional subspace where $M$ combinations are constructed as a combination of $p$ predictors. The $M$ combinations of predictors are then used to fit a least squares linear regression model. In order to benefit from this approach, $M < p$ must hold. If $M = p$, then the resulting model amounts to using a least squares fit using all of the original predictors. We especially benefit from this approach when $p$ (number of predictors) is large relative to n (number of observations), as using $M < p$ can reduce the variance of the model. 
 
 Dimension reduction methods generally follow two steps:  
 1. Obtain the transformed predictors $Z_1$, $Z_2$,...$Z_M$  
@@ -95,7 +95,7 @@ Now that we understand how these principal components contribute to our model, l
 
 ### Algorithm Behind the Method:
 
-1. Center and standardize our original predictor variable matrix, X.  
+1. Center and standardize our original predictor variable matrix, $X$.  
     + This method is sensitive to variance in the predictor variables, so this step is necessary to ensure each variable contributes equally to the model  
 2. Compute the covariance matrix by multiplying the transpose of this standardized matrix by itself.  
     + Thus, where X has been standardized: $X^TX$  
@@ -170,3 +170,91 @@ fviz_eig(prcomp.fit, ncp = 58)
 
 
 ## Partial Least Squares (PLS)
+
+Partial least squares (PLS) is very similar to principal components regression (PCR), in that both generate a new set of features that are linear combinations of the original features. However, unlike PCR, PLS incorporates information from the response variable when creating these new features. In doing so, PLS attempts to identify directions that explain the most variance in both the features and the response, rather than just explaining the variance in the features. Because PCR only considers the variance in the features, it may not be best for prediction, particularly if there is some variance in the features unrelated to the variance in the response.
+
+PLS can be thought of as a supervised alternative to PCR's unsupervised approach. This is not to say that PCR cannot be used for supervised learning problems (it can be used for either supervised or unsupervised problems), but instead describes the method of generating the new features. PLS, on the other hand, can only be used for supervised problems, since the response variable is used in the creation of the new features.
+
+<iframe src="https://giphy.com/embed/ehVD71SQYsCHWrWgvs" width="480" height="271" frameBorder="0" class="giphy-embed" allowFullScreen></iframe><p><a href="https://giphy.com/gifs/moodman-ehVD71SQYsCHWrWgvs">via GIPHY</a></p>
+
+### Algorithm
+
+PLS generates new features $Z$ that are linear combinations of the original features $X$. This means that the $m$th new feature can be written as $Z_m = \sum_{j = 1}^p \phi_{jm}X_j$, where $p$ is the total number of original features.
+
+This process for creating these new features is as follows:
+
+1. Standardize all features.
+
+2. Initialize $X^{(0)} = X$ and $m=1$.
+
+3. Compute the first direction $Z_1$ by setting $\phi_{j1}$ equal to the coefficient of ordinary least squares linear regression between $Y$ and $X_j$. In doing so, the $X_j$'s most highly correlated with $Y$ receive the highest weights in $Z_1$.
+
+4. Orthogonalize $X$ with respect to $Z_1$ by regressing each variable $X_j$ on $Z_1$ and taking the residuals. Denote these orthogonalized values $X^{(1)}$. This means that $X^{(1)}$ is essentially the information not already explained by the first direction.
+
+5. Repeat steps 2-4 to calculate each $Z_m$ for $m = 2, ..., p$, using the orthogonalized $X^{(m-1)}$ output from the previous step instead of $X$ to generate $Z_m$. So $X^{(1)}$ is used to calculate $Z_2$, $X^{(2)}$ is used to calculate $Z_3$, and so on.
+
+6. Use ordinary least squares to regress $Y$ on $Z_1, ..., Z_m$ for some $m \le p$. Generally use cross-validation to choose the best value of $m$.
+
+### Code
+
+```{r read_data, message=FALSE}
+library(tidyverse)
+news <- read_csv("OnlineNewsPopularity.csv")
+
+news_cl <- select(news, -url, -timedelta)
+```
+
+To implement PLS in R, we can use the `pls` package. After loading the package, the basic syntax for fitting PLS regression is very similar to that of linear regression with the `lm` function, though in this case we will use the `plsr` function. The first argument is a formula to tell the function what the response and predictor variables are. In this case, we're using online news data with `shares` as the response and all other variables as predictors. To avoid having to type out 58 variables in the formula, we can instead use `shares ~ .` to indicate that all columns besides `shares` should be treated as predictor variables. Additionally, to standardize the predictors, we can specify `scale = TRUE` and `center = TRUE`.
+
+```{r fit_pls, message=FALSE}
+#load the pls library
+library(pls)
+
+#fit the pls regression
+pls_fit <- plsr(shares ~ ., data = news_cl, scale = TRUE, center = TRUE)
+
+summary(pls_fit)
+```
+
+The summary of the fit shows the percentage of variance explained by each additional component. In this example, we see that five components explain 24% of the variance in the data, and 10 components explain 38% of the variance in the data. 
+
+We can also make predictions for new data using our PLS model. As with fitting the model, this process is very similar to ordinary least squares regression. We will use the `predict` function, but will need to include an additional parameter `ncomp` to specify the number of components to include.
+
+More info on the `pls` package is available [here](https://cran.r-project.org/web/packages/pls/vignettes/pls-manual.pdf).
+
+```{r pred_pls}
+#predict for given number of components (3 in this case)
+predict(pls_fit, ncomp = 3, newdata = news_cl[39640:39644,])
+```
+
+While the percentage of variance explained gives us some information about how many components to include, best practice is to choose this number using cross-validation. One method of cross-validation would involve a double for loop to iterate through subsets of the data and number of components, making predictions and calculating an error measure (generally root mean squared error for numeric predictor variables) for each combination, then choosing the number of components with the smallest RMSE. However, the `caret` package can simplify this process considerably using the `train` function. We need to include the same parameters as in the function call to `plsr`, along with a few additional parameters. We specify `method = "pcr"` since `train` can handle many different model types, `trControl = trainControl("cv", number = 10)` to indicate that we want 10-fold cross-validation, and `tuneLength = 10` to indicate that we want to test values from 1 to 10 for the `ncomp` parameter.
+
+```{r pls_cv, message=FALSE}
+library(caret)
+
+#set seed for reproducibility, since CV involves random partitions
+set.seed(300)
+ 
+pls_cv <- train(shares ~ ., data = news_cl, scale = TRUE, center = TRUE, 
+               method = "pcr", trControl = trainControl("cv", number = 10), 
+               tuneLength = 10)
+
+plot(pls_cv)
+
+pls_cv$bestTune
+```
+
+From cross-validation, we see that two components is the best choice, and that including more than that may lead to overfitting.
+
+More info on the `caret` package can be found [here](http://topepo.github.io/caret/index.html).
+
+### Pros & Cons
+
+PLS can perform well for prediction when there are many features, even when multicollinearity is present, violating the assumptions for ordinary least squares (OLS). Multicollinearity occurs when some predictor variables are highly correlated with some combination of other predictor variables, and occurs increasingly often as the number of predictor variables grows. Therefore PLS can be useful for prediction with high-dimensional data (when the number of predictors $p$ is large relative to the number of observations $n$). However, PLS is less interpretable than OLS in understanding the underlying relationship between features and response, since it involves the creation of new features.
+
+PLS generally has lower bias but higher variance than PCR.
+
+PLS can have minor instability in its estimates because it tends to shrink low-variance directions but sometimes inflates high-variance directions. Ridge regression shrinks all directions, but especially low-variance directions, while PCR discards low-variance directions.
+
+PLS, PCR, and ridge regression typically perform very similarly, but for minimizing prediction error, ridge regression is generally preferred because it shrinks smoothly as opposed to in discrete steps.
+
