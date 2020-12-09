@@ -40,11 +40,12 @@ Before we dive into dimension reduction, we will refresh a few key concepts.
 
 **Bias & Variance**
 
-**Model Selection Criteria:** Model selection criteria are used to evaluate and compare subset regression models. Common criteria used include:
-	+ Adjusted R^2 = [will write equation in latex/Rmd]
-Akaike Information Criterion (AIC) = [will write equation in latex/Rmd]
-	+ Bayesian Information Criterion (BIC) = [will write equation in latex/Rmd]
-	+ Residual Sum of Squares (RSS) = [will write equation in latex/Rmd]
+**Model Selection Criteria:** Model selection criteria are used to evaluate and compare subset regression models. Common criteria used include: 
+
+* Adjusted R^2 = [will write equation in latex/Rmd]
+Akaike Information Criterion (AIC) = [will write equation in latex/Rmd]  
+* Bayesian Information Criterion (BIC) = [will write equation in latex/Rmd]  
+* Residual Sum of Squares (RSS) = [will write equation in latex/Rmd]  
 	
 ### Why improve on least squares?
 OLS is not well-suited to high dimensional data. When the number of predictors $p$ is greater than the number of observations $n$, it will be possible to create a model explaining 100% of the variance in the data, which will lead to overfitting and poor prediction for new data.
@@ -61,6 +62,84 @@ OLS is not well-suited to high dimensional data. When the number of predictors $
 
 # Dimension Reduction
 
-## Principal Components
+In the methods described so far, we have focused on feature selection and eliminating features that we decide are not significant enough for our model. However, in entirely dropping these features - however insignificant they may be - we completely miss out on any benefits these dropped variables may contribute. Instead, we could incorporate all variables strategically in order to extract as much information as possible using dimension reduction. Dimension reduction entails creating an M-dimensional subspace where M combinations are constructed as a combination of p predictors. The M combinations of predictors are then used to fit a least squares linear regression model. In order to benefit from this approach, M < p must hold. If M = p, then the resulting model amounts to using a least squares fit using all of the original predictors. We especially benefit from this approach when p (number of predictors) is large relative to n (number of observations), as using M < p can reduce the variance of the model. 
 
-## Partial Least Squares
+Dimension reduction methods generally follow two steps:  
+1. Obtain the transformed predictors $Z_1$, $Z_2$,...$Z_M$  
+2. Fit the model using these predictors
+
+In the following sections, we will discuss two popular methods for dimension reduction: Principal Component Analysis (PCA) and Partial Least Squares (PLS).
+
+
+## Principal Components Analysis (PCA)
+
+Principal Components Analysis is a dimension reduction technique in which variables named principal components are constructed as linear combinations of our original variables. There are as many principal components created as there are original variables in our data. However, in order to attain a model with reduced dimensions, we will aim to drop a number of these principal components. To determine which principal components can be excluded from our model, we will  rank the principal components by their importance in predicting the response variable. Then, only the most important principal components are used in the linear model. 
+
+We will likely want to use this method when we seek to reduce the number of variables, but do not know which ones. However, we will see that one drawback of this method is its interpretability, as we are no longer using our original predictors to predict the response but are instead using transformed predictors that each include all of our original predictors. 
+
+Before we dive into the algorithm and steps behind PCA, it will be helpful to review how and why we use variance to rank principal components by importance.
+
+### Constructing Principal Components
+
+Principal components represent the directions of the data that explain a maximal amount of variance. In understanding this method, it’s important to recognize that variance explained is equivalent to information captured in a model. The more variance in the data that we can explain through a feature, the better.
+
+The image below will help explain how this concept ties into principal component analysis. 
+
+[insert gif]
+
+The goal of principal component analysis is to compress as much information or variance in the first components, and thus the first principal component accounts for the largest variance in the dataset. 
+
+In the scatterplot above, we aim to construct a principal component or line that maximizes this variance, which is when the red dots are spread out the most along the line. This line then represents more variance and the larger the variance represented by a line, the larger the dispersion of points along a line, and thus the more information the line holds.
+
+Now that we understand how these principal components contribute to our model, let’s walk through the steps taken to construct the principal components. 
+
+### Algorithm Behind the Method:
+
+1. Center and standardize our original predictor variable matrix, X.  
+    + This method is sensitive to variance in the predictor variables, so this step is necessary to ensure each variable contributes equally to the model  
+2. Compute the covariance matrix by multiplying the transpose of this standardized matrix by itself.  
+    + Thus, where X has been standardized: $X^TX$  
+3. Compute the eigenvectors and eigenvalues of the covariance matrix, $X^TX$.  
+    + Let’s pause here for a refresher on linear algebra:  
+        + Eigenvectors represent directions and eigenvalues represent magnitude (or in this scenario, importance). Eigenvectors are stored in a dense matrix while eigenvalues are stored in a matrix with eigenvalues on the diagonal and zeros everywhere else. These eigenvalues on the diagonal are associated with the corresponding column in the eigenvector matrix. For example, an eigenvalue stored on the diagonal in the second column of its matrix corresponds to the second column in the eigenvector matrix.  
+        + [will create a 3x3 eigenvector and eigenvalue matrix to illustrate this in Rmd]  
+        + Luckily, there are functions in R that will compute these values for us, but it’s important to understand the eigenvectors and eigenvalues it outputs.  
+
+4. Sort the eigenvalues from largest to smallest  
+    + Since eigenvalues correspond to their eigenvectors, the eigenvectors are similarly sorted according to the order of their corresponding eigenvalue (put another way, the columns of the eigenvector matrix are reordered according to the reordering of the eigenvalue matrix).  
+5. Multiply this sorted eigenvector matrix by the standardized version of X from step 1.  
+    + As a result, we now have a standardized version of X with weights determined by the eigenvectors.  
+6. With this new matrix, determine how many features (principal components) to keep in the new feature matrix. This can be done a couple of ways:  
+    a) Arbitrarily determine how many dimensions to keep:  
+        + This is not recommended, but at times may be appropriate for your specific analysis or problem  
+
+    b) Set a threshold for proportion of variance explained:  
+        + As explained earlier, the importance of a principal component or eigenvector is tied to variance. Further, each eigenvalue is approximately the importance of its corresponding eigenvalue (as we saw when sorting our eigenvalues and then eigenvectors). Therefore, we can create a metric for measuring the importance or variance explained by each principal component or eigenvector called the proportion of variance, which is the sum of all eigenvalues kept divided by the sum of all eigenvalues.  
+        + With this metric, we can then pick a threshold of proportion of variance explained and include principal components up until we reach the set threshold.
+ 
+     c) Use a scree plot:  
+        + Similar to the method above, we can use the proportion of variance to determine how many principal components to keep.     
+        + We calculate the proportion of variance for each principal component, sort the principal components by proportion of variance explained (though they technically should already be sorted in order of importance), then plot the proportion of variance explained by each principal component.  
+        + We should then have a line plot with an elbow that denotes the point at which there is the largest drop in proportion of variance explained. We then decide to use the principal components up until this drop. In the scree plot below, there is a considerable drop between proportion of variance explained in PC1 to PC2. We would therefore identify PC2 as the elbow and only include the first feature (PC1) and drop the rest. As you can see, a disadvantage of this method is that it is relatively subjective.
+
+[insert scree plot image]
+
+7. Use this new feature matrix with the principal components/eigenvectors we chose to keep as the new X in our linear regression model against the untransformed Y -- this type of regression using PCA is known as Principal Components Regression (PCR).  
+
+    + Note: Each of these new variables resulting from PCA are all independent of each other, which is an important assumption that must hold for a linear model.
+    
+### Conding examples: 
+
+Load data and libraries:
+```{r, echo=FALSE}
+library(pls)
+library(dplyr)
+library(factoextra)
+set.seed(123)
+news = read.csv('OnlineNewsPopularity.csv') %>% select(-url, -timedelta)
+```
+```{r}
+
+```
+
+## Partial Least Squares (PLS)
