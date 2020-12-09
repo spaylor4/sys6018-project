@@ -85,7 +85,7 @@ Principal components represent the directions of the data that explain a maximal
 
 The image below will help explain how this concept ties into principal component analysis. 
 
-[insert gif]
+![](https://builtin.com/sites/default/files/inline-images/Principal%20Component%20Analysis%20second%20principal.gif)
 
 The goal of principal component analysis is to compress as much information or variance in the first components, and thus the first principal component accounts for the largest variance in the dataset. 
 
@@ -121,7 +121,7 @@ Now that we understand how these principal components contribute to our model, l
         + We calculate the proportion of variance for each principal component, sort the principal components by proportion of variance explained (though they technically should already be sorted in order of importance), then plot the proportion of variance explained by each principal component.  
         + We should then have a line plot with an elbow that denotes the point at which there is the largest drop in proportion of variance explained. We then decide to use the principal components up until this drop. In the scree plot below, there is a considerable drop between proportion of variance explained in PC1 to PC2. We would therefore identify PC2 as the elbow and only include the first feature (PC1) and drop the rest. As you can see, a disadvantage of this method is that it is relatively subjective.
 
-[insert scree plot image]
+![https://datavizpyr.com/how-to-make-scree-plot-in-r-with-ggplot2/](https://i2.wp.com/datavizpyr.com/wp-content/uploads/2020/08/Scree_plot_with_geom_line_ggplot2.png?w=600&ssl=1)
 
 7. Use this new feature matrix with the principal components/eigenvectors we chose to keep as the new X in our linear regression model against the untransformed Y -- this type of regression using PCA is known as Principal Components Regression (PCR).  
 
