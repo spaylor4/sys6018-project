@@ -102,7 +102,6 @@ Now that we understand how these principal components contribute to our model, l
 3. Compute the eigenvectors and eigenvalues of the covariance matrix, $X^TX$.  
     + Let’s pause here for a refresher on linear algebra:  
         + Eigenvectors represent directions and eigenvalues represent magnitude (or in this scenario, importance). Eigenvectors are stored in a dense matrix while eigenvalues are stored in a matrix with eigenvalues on the diagonal and zeros everywhere else. These eigenvalues on the diagonal are associated with the corresponding column in the eigenvector matrix. For example, an eigenvalue stored on the diagonal in the second column of its matrix corresponds to the second column in the eigenvector matrix.  
-        + [will create a 3x3 eigenvector and eigenvalue matrix to illustrate this in Rmd]  
         + Luckily, there are functions in R that will compute these values for us, but it’s important to understand the eigenvectors and eigenvalues it outputs.  
 
 4. Sort the eigenvalues from largest to smallest  
@@ -128,18 +127,46 @@ Now that we understand how these principal components contribute to our model, l
 
     + Note: Each of these new variables resulting from PCA are all independent of each other, which is an important assumption that must hold for a linear model.
     
-### Conding examples: 
+### Coding examples: 
 
-Load data and libraries:
-```{r, echo=FALSE}
-library(pls)
+```{r, include=FALSE}
 library(dplyr)
-library(factoextra)
 set.seed(123)
-news = read.csv('OnlineNewsPopularity.csv') %>% select(-url, -timedelta)
 ```
+There are a couple of libraries you can use for PCR - one 'pls' which also can be used for PLS (covered next). We'll first show how to run PCR using this library:
+```{r, message=FALSE}
+library(pls)
+```
+Run PCR with cross-validation:
 ```{r}
-
+news = read.csv('OnlineNewsPopularity.csv') %>% select(-url, -timedelta)
+pcr.fit = pcr(shares~., data = news, scale=TRUE, validation ="CV")
 ```
+In the above code, scale is set to "TRUE" in order to standardize each predictor. Validation is set to "CV" in order to compute ten-fold cross-validation error for each possible value of M (the number of principal components used). Having the cross-validation error will give us another metric to judge principal components by.
+
+Summary:
+```{r}
+summary(pcr.fit)
+```
+From this summary, we see that the smallest RMSE at 55 components (M=55) of 11522, at which point 100% of variance is explained.
+
+
+Next, we can use the function prcomp() within the factoextra library for PCR. The difference in setting up pcr() vs. prcomp() is that prcomp() needs the data passed in with no response variable. Therefore, we create an X from our data, removing our response variable, shares.
+```{r, message=FALSE}
+library(factoextra)
+
+X = news %>% select(-shares)
+
+prcomp.fit = prcomp(X, scale = TRUE)
+
+summary(prcomp.fit)
+```
+Similar to pcr(), we have a summary table with all PCs. Instead, here we have Proportion of Variance and Cumulative Proportion available to us. 
+
+Next, visualize eigenvalues (scree plot). Show the percentage of variances explained by each principal component. 58 is passed in for "ncp" in order to visualize all PCs. If you would like to view less, you can change this input.
+```{r}
+fviz_eig(prcomp.fit, ncp = 58)
+```
+
 
 ## Partial Least Squares (PLS)
