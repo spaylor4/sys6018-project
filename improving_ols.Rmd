@@ -12,6 +12,49 @@ output:
 
 # Introduction
 
+Have you recently mastered the introductory concepts in producing statistical models? Congratulations! With this knowledge, it’s now time to consider fine tuning model parameters further in order to improve the ordinary least squares (OLS) approach. One way we can do this is by determining if all of the parameters or variables are important in our model or if we instead can produce a better model after reducing the variables in the model through feature selection. You were likely introduced to subset selection in an introductory statistical model course, but there are other methods, as well, to improving OLS with feature selection. We will cover the following techniques in this tutorial with respect to the each method’s motivation and algorithm:
+
+1. Subset Selection
+    + Best Subsets
+    + Stepwise Selection/Elimination
+2. Penalized Regression
+    + Ridge
+    + Lasso
+    + Elastic Net
+3. Dimension Reduction
+    + Principal Component Analysis (PCA)
+    + Partial Least Squares (PLS)
+
+In addition, we will demonstrate these techniques through a coding example with the following dataset.
+
+Before we dive into dimension reduction, we will refresh a few key concepts.
+
+### Review:
+**Supervised vs Unsupervised Learning**
+
+**Response Variable:** the variable of interest in a prediction problem, usually denoted $Y$.
+
+**Features/predictor Variables:** data used in modeling, usually denoted $X$. In a supervised learning problem, these features are used to predict the response variable.
+
+**Standardizing Variables:** re-scaling variables to have mean zero and variance one. Standardizing can be especially important when variables are on widely differing scales (e.g. one feature on a percentage scale with values between zero and one and another feature measured in dollars on a scale from zero to several thousand).
+
+**Bias & Variance**
+
+**Model Selection Criteria:** Model selection criteria are used to evaluate and compare subset regression models. Common criteria used include:
+	+ Adjusted R^2 = [will write equation in latex/Rmd]
+Akaike Information Criterion (AIC) = [will write equation in latex/Rmd]
+	+ Bayesian Information Criterion (BIC) = [will write equation in latex/Rmd]
+	+ Residual Sum of Squares (RSS) = [will write equation in latex/Rmd]
+	
+### Why improve on least squares?
+OLS is not well-suited to high dimensional data. When the number of predictors $p$ is greater than the number of observations $n$, it will be possible to create a model explaining 100% of the variance in the data, which will lead to overfitting and poor prediction for new data.
+
+### Real Life Applications:
++ DNA Sequencing
++ GDP 
++ Housing prices
+
+
 # Subset Selection
 
 # Penalized Regression
@@ -21,92 +64,3 @@ output:
 ## Principal Components
 
 ## Partial Least Squares
-
-Partial least squares (PLS) is very similar to principal components regression (PCR), in that both generate a new set of features that are linear combinations of the original features. However, unlike PCR, PLS incorporates information from the response variable when creating these new features. In doing so, PLS attempts to identify directions that explain the most variance in both the features and the response, rather than just explaining the variance in the features. Because PCR only considers the variance in the features, it may not be best for prediction, particularly if there is some variance in the features unrelated to the variance in the response.
-
-PLS can be thought of as a supervised alternative to PCR's unsupervised approach. This is not to say that PCR cannot be used for supervised learning problems (it can be used for either supervised or unsupervised problems), but instead describes the method of generating the new features. PLS, on the other hand, can only be used for supervised problems, since the response variable is used in the creation of the new features.
-
-### Algorithm
-
-PLS generates new features $Z$ that are linear combinations of the original features $X$. This means that the $m$th new feature can be written as $Z_m = \sum_{j = 1}^p \phi_{jm}X_j$, where $p$ is the total number of original features.
-
-This process for creating these new features is as follows:
-
-1. Standardize all features.
-
-2. Initialize $X^{(0)} = X$ and $m=1$.
-
-3. Compute the first direction $Z_1$ by setting $\phi_{j1}$ equal to the coefficient of ordinary least squares linear regression between $Y$ and $X_j$. In doing so, the $X_j$'s most highly correlated with $Y$ receive the highest weights in $Z_1$.
-
-4. Orthogonalize $X$ with respect to $Z_1$ by regressing each variable $X_j$ on $Z_1$ and taking the residuals. Denote these orthogonalized values $X^{(1)}$. This means that $X^{(1)}$ is essentially the information not already explained by the first direction.
-
-5. Repeat steps 2-4 to calculate each $Z_m$ for $m = 2, ..., p$, using the orthogonalized $X^{(m-1)}$ output from the previous step instead of $X$ to generate $Z_m$. So $X^{(1)}$ is used to calculate $Z_2$, $X^{(2)}$ is used to calculate $Z_3$, and so on.
-
-6. Use ordinary least squares to regress $Y$ on $Z_1, ..., Z_m$ for some $m \le p$. Generally use cross-validation to choose the best value of $m$.
-
-### Code
-
-```{r read_data, message=FALSE}
-library(tidyverse)
-news <- read_csv("OnlineNewsPopularity.csv")
-
-news_cl <- select(news, -url, -timedelta)
-```
-
-To implement PLS in R, we can use the `pls` package. After loading the package, the basic syntax for fitting PLS regression is very similar to that of linear regression with the `lm` function, though in this case we will use the `plsr` function. The first argument is a formula to tell the function what the response and predictor variables are. In this case, we're using online news data with `shares` as the response and all other variables as predictors. To avoid having to type out 58 variables in the formula, we can instead use `shares ~ .` to indicate that all columns besides `shares` should be treated as predictor variables. Additionally, to standardize the predictors, we can specify `scale = TRUE` and `center = TRUE`.
-
-```{r fit_pls, message=FALSE}
-#load the pls library
-library(pls)
-
-#fit the pls regression
-pls_fit <- plsr(shares ~ ., data = news_cl, scale = TRUE, center = TRUE)
-
-summary(pls_fit)
-```
-
-The summary of the fit shows the percentage of variance explained by each additional component. In this example, we see that five components explain 24% of the variance in the data, and 10 components explain 38% of the variance in the data. 
-
-We can also make predictions for new data using our PLS model. As with fitting the model, this process is very similar to ordinary least squares regression. We will use the `predict` function, but will need to include an additional parameter `ncomp` to specify the number of components to include.
-
-More info on the `pls` package is available [here](https://cran.r-project.org/web/packages/pls/vignettes/pls-manual.pdf).
-
-```{r pred_pls}
-#predict for given number of components (3 in this case)
-predict(pls_fit, ncomp = 3, newdata = news_cl[39640:39644,])
-```
-
-While the percentage of variance explained gives us some information about how many components to include, best practice is to choose this number using cross-validation. One method of cross-validation would involve a double for loop to iterate through subsets of the data and number of components, making predictions and calculating an error measure (generally root mean squared error for numeric predictor variables) for each combination, then choosing the number of components with the smallest RMSE. However, the `caret` package can simplify this process considerably using the `train` function. We need to include the same parameters as in the function call to `plsr`, along with a few additional parameters. We specify `method = "pcr"` since `train` can handle many different model types, `trControl = trainControl("cv", number = 10)` to indicate that we want 10-fold cross-validation, and `tuneLength = 10` to indicate that we want to test values from 1 to 10 for the `ncomp` parameter.
-
-```{r pls_cv, message=FALSE}
-library(caret)
-
-#set seed for reproducibility, since CV involves random partitions
-set.seed(300)
- 
-pls_cv <- train(shares ~ ., data = news_cl, scale = TRUE, center = TRUE, 
-               method = "pcr", trControl = trainControl("cv", number = 10), 
-               tuneLength = 10)
-
-plot(pls_cv)
-
-pls_cv$bestTune
-```
-
-From cross-validation, we see that two components is the best choice, and that including more than that may lead to overfitting.
-
-More info on the `caret` package can be found [here](http://topepo.github.io/caret/index.html).
-
-### Pros & Cons
-
-PLS can perform well for prediction when there are many features, even when multicollinearity is present, violating the assumptions for ordinary least squares (OLS). Multicollinearity occurs when some predictor variables are highly correlated with some combination of other predictor variables, and occurs increasingly often as the number of predictor variables grows. Therefore PLS can be useful for prediction with high-dimensional data (when the number of predictors $p$ is large relative to the number of observations $n$). However, PLS is less interpretable than OLS in understanding the underlying relationship between features and response, since it involves the creation of new features.
-
-PLS generally has lower bias but higher variance than PCR.
-
-PLS can have minor instability in its estimates because it tends to shrink low-variance directions but sometimes inflates high-variance directions. Ridge regression shrinks all directions, but especially low-variance directions, while PCR discards low-variance directions.
-
-PLS, PCR, and ridge regression typically perform very similarly, but for minimizing prediction error, ridge regression is generally preferred because it shrinks smoothly as opposed to in discrete steps.
-
-# Conclusion
-
-# Resources
