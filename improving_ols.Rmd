@@ -147,13 +147,6 @@ As seen above, the three stepwise-type procedures do not give the same results a
 
 # Penalized Regression
 
----
-title: "Improving Least Squares"
-author: "Rachel Filderman, Latifa Hasan, Emily Murphy, Shannon Paylor"
-date: "12/8/2020"
-output: html_document
----
-
 The subset method focuses on using least squares to improve on regression using an “all or nothing” approach [11]. The results from the subset selection methods can vary based on the model used, and the methods in subset selection are not often robust to data of all sizes. rendering the subset selection method unstable. Shrinkage methods are useful in cases where subset selection methods are unstable. Shrinkage methods shrink the coefficients closer to 0 that helps improve model fit and predictive power by reducing the variance of the coefficient estimates generated. Shrinkage accomplishes this by using a penalized regression method, where a penalty is imposed for having many variables in the model. Penalized regression methods are available for linear and logistic regression depending on the type of outcome we are trying to predict. 
 
 There are three well known methods for penalized regression: ridge, lasso, and elastic net. Each method imposes the penalty by using a tuning parameter called $\lambda$, the $\lambda$ value is selected using 10-fold cross-validation. The minimum $\lambda$ value generated is the best tuning parameter used in each of the models. The primary difference in the three methods is in their choice of $\alpha$. Ridge regression uses an $\alpha$ value of 0 and lasso regression uses an $\alpha$ value of 1. Elastic net regression provides the flexibility to choose an $\alpha$ value between 0 and 1. 
@@ -165,7 +158,6 @@ The code below is a demonstration of implementing penalized regression using rid
 #Import the libraries 
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)  #for data visualization and manipulation
 library(ggplot2)   #for data visualization
 library(MASS)  #for ridge regression 
