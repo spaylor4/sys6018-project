@@ -33,7 +33,7 @@ Have you recently mastered the introductory concepts in producing statistical mo
 
 In addition, we will demonstrate these techniques through a coding example with the following dataset.
 
-Before we dive into dimension reduction, we will refresh a few key concepts.
+Before we dive into dimension reduction, let's refresh a few key concepts.
 
 ### Review:
 **Supervised vs Unsupervised Learning:** supervised learning involves modeling a response variable on one or more features, while unsupervised learning involves finding underlying structure in data features without relating to a predictor variable.
@@ -54,7 +54,7 @@ Before we dive into dimension reduction, we will refresh a few key concepts.
 * Mean Square Error (MSE) = $\frac{1}{n}\sum_{i=1}^n(y_i-\hat{y}_i)^2$
 	
 ### Why improve on least squares?
-OLS is not well-suited to high dimensional data. When the number of predictors $p$ is greater than the number of observations $n$, it will be possible to create a model explaining 100% of the variance in the data, which will lead to overfitting and poor prediction for new data.
+OLS is not well-suited to high dimensional data. When the number of predictors $p$ is greater than the number of observations $n$, it will be possible to create a model explaining 100% of the variance in the data, which will usually lead to overfitting and poor prediction for new data.
 
 ### Real Life Applications:
 + DNA Sequencing
@@ -291,13 +291,6 @@ This process for creating these new features is as follows:
 
 ### Code Implementation
 
-```{r read_data, message=FALSE}
-library(tidyverse)
-news <- read_csv("OnlineNewsPopularity.csv")
-
-news_cl <- select(news, -url, -timedelta)
-```
-
 To implement PLS in R, we can use the `pls` package. After loading the package, the basic syntax for fitting PLS regression is very similar to that of linear regression with the `lm` function, though in this case we will use the `plsr` function. The first argument is a formula to tell the function what the response and predictor variables are. In this case, we're using online news data with `shares` as the response and all other variables as predictors. To avoid having to type out 58 variables in the formula, we can instead use `shares ~ .` to indicate that all columns besides `shares` should be treated as predictor variables. Additionally, to standardize the predictors, we can specify `scale = TRUE` and `center = TRUE`.
 
 ```{r fit_pls, message=FALSE}
@@ -305,7 +298,7 @@ To implement PLS in R, we can use the `pls` package. After loading the package, 
 library(pls)
 
 #fit the pls regression
-pls_fit <- plsr(shares ~ ., data = news_cl, scale = TRUE, center = TRUE)
+pls_fit <- plsr(shares ~ ., data = news, scale = TRUE, center = TRUE)
 
 summary(pls_fit)
 ```
@@ -318,7 +311,7 @@ More info on the `pls` package is available [here](https://cran.r-project.org/we
 
 ```{r pred_pls}
 #predict for given number of components (3 in this case)
-predict(pls_fit, ncomp = 3, newdata = news_cl[39640:39644,])
+predict(pls_fit, ncomp = 3, newdata = news[39640:39644,])
 ```
 
 While the percentage of variance explained gives us some information about how many components to include, best practice is to choose this number using cross-validation. One method of cross-validation would involve a double for loop to iterate through subsets of the data and number of components, making predictions and calculating an error measure (generally root mean squared error for numeric predictor variables) for each combination, then choosing the number of components with the smallest RMSE. However, the `caret` package can simplify this process considerably using the `train` function. We need to include the same parameters as in the function call to `plsr`, along with a few additional parameters. We specify `method = "pcr"` since `train` can handle many different model types, `trControl = trainControl("cv", number = 10)` to indicate that we want 10-fold cross-validation, and `tuneLength = 10` to indicate that we want to test values from 1 to 10 for the `ncomp` parameter.
@@ -329,7 +322,7 @@ library(caret)
 #set seed for reproducibility, since CV involves random partitions
 set.seed(300)
  
-pls_cv <- train(shares ~ ., data = news_cl, scale = TRUE, center = TRUE, 
+pls_cv <- train(shares ~ ., data = news, scale = TRUE, center = TRUE, 
                method = "pcr", trControl = trainControl("cv", number = 10), 
                tuneLength = 10)
 
