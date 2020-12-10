@@ -157,9 +157,8 @@ The code below is a demonstration of implementing penalized regression using rid
 
 #### Import the libraries 
 
-```{r setup, include=FALSE}
+```{r, message=FALSE}
 library(tidyverse)  #for data visualization and manipulation
-library(ggplot2)   #for data visualization
 library(MASS)  #for ridge regression 
 library(broom)
 library(glmnet)  #for ridge, lasso, and elastic net regression 
