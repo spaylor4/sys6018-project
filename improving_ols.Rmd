@@ -231,7 +231,6 @@ x.test <- model.matrix(test$shares ~., test)#[,-1]
 x.test <- x.test[,-1]
 
 predictions_ridge <- ridge %>% predict(x.test)
-predictions_ridge
 
 # Model performance metrics
 RMSE_ridge = RMSE(predictions_ridge, test$shares)
@@ -433,7 +432,6 @@ library(pls)
 ```
 Run PCR with cross-validation:
 ```{r}
-news = read.csv('OnlineNewsPopularity.csv') %>% select(-url, -timedelta)
 pcr.fit = pcr(shares~., data = news, scale=TRUE, validation ="CV")
 ```
 In the above code, `scale` is set to `TRUE` in order to standardize each predictor. `validation` is set to `CV` in order to compute ten-fold cross-validation error for each possible value of M (the number of principal components used). Having the cross-validation error will give us another metric to judge principal components by.
@@ -449,7 +447,7 @@ More info on the `pls` package is available [here](https://cran.r-project.org/we
 
 Next, we can use the function `prcomp()` within the core stats package for PCR. The difference in setting up `pcr()` vs. `prcomp()` is that `prcomp()` needs the data passed in with no response variable. Therefore, we create an `X` from our data, removing our response variable, `shares`.
 ```{r, message=FALSE}
-X = news %>% select(-shares)
+X = news %>% dplyr::select(-shares)
 
 prcomp.fit = prcomp(X, scale = TRUE)
 
@@ -558,4 +556,38 @@ We hope you've enjoyed our tutorial!
 
 ![](https://media.giphy.com/media/uWlpPGquhGZNFzY90z/giphy.gif){width=50%}
 
+
+## References 
+
+[1] G. James, D. Witten, T. Hastie, and R. Tibshirani, An Introduction to Statistical Learning with Applications in R. New York: Springer, 2013.
+
+[2] T. Hastie, J. Friedman, and R. Tisbshirani, The Elements of Statistical Learning: Data Mining, Inference, and Prediction, 2nd ed. New York: Springer, 2009.
+
+[3] R. Merrett, “Online News Popularity.” Available: https://code.datasciencedojo.com/datasciencedojo/datasets/tree/master/Online News Popularity [Accessed: 03-Dec-2020].
+
+[4] M. Brems, “A One-Stop Shop for Principal Component Analysis.” Available: https://towardsdatascience.com/a-one-stop-shop-for-principal-component-analysis-5582fb7e0a9c. [Accessed: 04-Dec-2020].
+
+[5] D. Montgomery, E. Peck, and G. Vining, Introduction To Linear Regression Analysis. 5th ed. Wiley, 2012.
+
+[6] Z, Jaadi, “A Step-by-Step Explanation of Principal Component Analysis.” Available: https://builtin.com/data-science/step-step-explanation-principal-component-analysis. [Accessed: 05-Dec-2020].
+
+[7] R. Tobias, “An Introduction to Partial Least Squares Regression.” Available: https://stats.idre.ucla.edu/wp-content/uploads/2016/02/pls.pdf. [Accessed: 03-Dec-2020].
+
+[8] Kassambara, “Principal Component and Partial Least Squares Regression Essentials,” STHDA, 11-Mar-2018. [Online]. Available: http://www.sthda.com/english/articles/37-model-selection-essentials-in-r/152-principal-component-and-partial-least-squares-regression-essentials/. [Accessed: 07-Dec-2020].
+
+[9] B.-H. Mevik and R. Wehrens, “Introduction to the pls Package,” 04-Aug-2020. [Online]. Available: https://cran.r-project.org/web/packages/pls/vignettes/pls-manual.pdf. [Accessed: 07-Dec-2020].
+
+[10] M. Kuhn, “The caret Package,” 27-Mar-2019. [Online]. Available: http://topepo.github.io/caret/index.html. [Accessed: 07-Dec-2020].
+
+[11] M. Porter, “Data Mining Lecture .” Data Mining Lecture . 10-Sept-2020, Charlottesville. https://mdporter.github.io/SYS6018/lectures/03-penalized.pdf
+
+[12] J. Friedman et al., glmnet: Lasso and Elastic-Net Regularized Generalized Linear Models. 2020. https://CRAN.R-project.org/package=glmnet
+
+[13] M. Porter, “Supervised Learning II Lecture .” 01-Sept-2020, Charlottesville. https://mdporter.github.io/SYS6018/lectures/03-penalized.pdf
+
+[14] G. Elumalai, “Pros and cons of common Machine Learning algorithms,” Medium, Nov. 19, 2019. https://medium.com/@gokul.elumalai05/pros-and-cons-of-common-machine-learning-algorithms-45e05423264f [Accessed 07-Dec-2020].
+
+[15] “Penalized Regression Essentials: Ridge, Lasso & Elastic Net - Articles - STHDA.” http://www.sthda.com/english/articles/37-model-selection-essentials-in-r/153-penalized-regression-essentials-ridge-lasso-elastic-net/ [Accessed 07-Dec-2020].
+
+[16] A. Kassambara et al., factoextra: Extract and Visualize the Results of Multivariate Data Analyses. 2020. https://CRAN.R-project.org/package=factoextra 
 
