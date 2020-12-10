@@ -36,7 +36,7 @@ In addition, we will demonstrate these techniques through a coding example with 
 Before we dive into dimension reduction, we will refresh a few key concepts.
 
 ### Review:
-**Supervised vs Unsupervised Learning**
+**Supervised vs Unsupervised Learning:** supervised learning involves modeling a response variable on one or more features, while unsupervised learning involves finding underlying structure in data features without relating to a predictor variable.
 
 **Response Variable:** the variable of interest in a prediction problem, usually denoted $Y$.
 
@@ -44,7 +44,7 @@ Before we dive into dimension reduction, we will refresh a few key concepts.
 
 **Standardizing Variables:** re-scaling variables to have mean zero and variance one. Standardizing can be especially important when variables are on widely differing scales (e.g. one feature on a percentage scale with values between zero and one and another feature measured in dollars on a scale from zero to several thousand).
 
-**Bias & Variance**
+**Bias & Variance:** bias is a measure of how far the mean/expected value of an estimator is from the true value, or $E(\hatY) - Y$. Variance is a measure of how much the squared expected value of an estimator differs from the expected value of the squared estimator, or $E(\hatY^2) - E(\hatY)^2$. In other words, bias measures the error in the center of the estimate, and variance measures the error in the spread of the estimate. Generally, as model complexity increases, bias increases and variance decreases. This is frequently referred to as the bias-variance tradeoff.
 
 **Model Selection Criteria:** Model selection criteria are used to evaluate and compare subset regression models. Common criteria used include: 
 
@@ -85,7 +85,7 @@ Stepwise-type procedures determine which predictor variables to include by addin
 The initial model is the same as forward selection, and each predictor added must meet the same criteria as outlined in forward selection. After adding a new predictor, the partial F statistic is calculated for each of the predictors in the model, and the partial F statistic is compared to $F_{OUT}$. One important difference is all partial F statistics less than $F_{OUT}$ will be dropped, while only the smallest partial F statistic is dropped in backward elimination. The model will be complete when the partial F statistic for adding a predictor is less than $F_{IN}$.
 
 
-### How to Implement
+### Code Implementation
 We will show how to implement the various methods using an online news popularity data set. The data set includes 58 predictors and 39644 rows of observations. Examples of the predictors include number of words in the title, number of words in the article, a binary value for each day of the week, and average polarity of the words used. The two non-predictive columns we removed are url and timedelta, which is the time between the article being published and being added to the dataset. The goal is to determine which of the 58 predictors are most useful in using linear regression to find the number of times an article is shared. 
 
 The code below shows how to perform all three of the stepwise procedures. The output in R typically shows detailed steps of the different models, but only the summaries have been included here.
@@ -214,7 +214,7 @@ Now that we understand how these principal components contribute to our model, l
 
     + Note: Each of these new variables resulting from PCA are all independent of each other, which is an important assumption that must hold for a linear model.
     
-### Coding examples: 
+### Code Implementation
 
 ```{r, include=FALSE}
 library(dplyr)
@@ -262,7 +262,7 @@ Partial least squares (PLS) is very similar to principal components regression (
 
 PLS can be thought of as a supervised alternative to PCR's unsupervised approach. This is not to say that PCR cannot be used for supervised learning problems (it can be used for either supervised or unsupervised problems), but instead describes the method of generating the new features. PLS, on the other hand, can only be used for supervised problems, since the response variable is used in the creation of the new features.
 
-<iframe src="https://giphy.com/embed/ehVD71SQYsCHWrWgvs" width="480" height="271" frameBorder="0" class="giphy-embed" allowFullScreen></iframe><p><a href="https://giphy.com/gifs/moodman-ehVD71SQYsCHWrWgvs">via GIPHY</a></p>
+![](https://media.giphy.com/media/ehVD71SQYsCHWrWgvs/giphy.gif){width=50%}
 
 ### Algorithm
 
@@ -282,7 +282,7 @@ This process for creating these new features is as follows:
 
 6. Use ordinary least squares to regress $Y$ on $Z_1, ..., Z_m$ for some $m \le p$. Generally use cross-validation to choose the best value of $m$.
 
-### Code
+### Code Implementation
 
 ```{r read_data, message=FALSE}
 library(tidyverse)
