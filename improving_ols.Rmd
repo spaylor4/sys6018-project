@@ -349,3 +349,8 @@ PLS can have minor instability in its estimates because it tends to shrink low-v
 
 PLS, PCR, and ridge regression typically perform very similarly, but for minimizing prediction error, ridge regression is generally preferred because it shrinks smoothly as opposed to in discrete steps.
 
+## Conclusion
+
+In summary, it is important to consider the number of predictors being used to fit your model in OLS. Commonly, not all predictors are necessary and instead can lead to overfitting. We have outlined a few methods for either removing or transforming these predictors and unfortunately, one method is not always going to be the best method - it depends on the context of your data and the problem. Ridge does tend to most frequently outperform the others, but it's important to use discretion and due diligence to test or consider a couple methods, and then perhaps compare the resulting models using MSE. 
+
+We hope you've enjoyed our tutorial!
