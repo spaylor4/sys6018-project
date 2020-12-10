@@ -147,6 +147,217 @@ As seen above, the three stepwise-type procedures do not give the same results a
 
 # Penalized Regression
 
+---
+title: "Improving Least Squares"
+author: "Rachel Filderman, Latifa Hasan, Emily Murphy, Shannon Paylor"
+date: "12/8/2020"
+output: html_document
+---
+
+The subset method focuses on using least squares to improve on regression using an “all or nothing” approach [11]. The results from the subset selection methods can vary based on the model used, and the methods in subset selection are not often robust to data of all sizes. rendering the subset selection method unstable. Shrinkage methods are useful in cases where subset selection methods are unstable. Shrinkage methods shrink the coefficients closer to 0 that helps improve model fit and predictive power by reducing the variance of the coefficient estimates generated. Shrinkage accomplishes this by using a penalized regression method, where a penalty is imposed for having many variables in the model. Penalized regression methods are available for linear and logistic regression depending on the type of outcome we are trying to predict. 
+
+There are three well known methods for penalized regression: ridge, lasso, and elastic net. Each method imposes the penalty by using a tuning parameter called $\lambda$, the $\lambda$ value is selected using 10-fold cross-validation. The minimum $\lambda$ value generated is the best tuning parameter used in each of the models. The primary difference in the three methods is in their choice of $\alpha$. Ridge regression uses an $\alpha$ value of 0 and lasso regression uses an $\alpha$ value of 1. Elastic net regression provides the flexibility to choose an $\alpha$ value between 0 and 1. 
+
+### How to Implement Penalized Regression 
+
+The code below is a demonstration of implementing penalized regression using ridge, lasso, and elastic net regression methods. Since penalized regression aims to improve predictive power of regression models, we determine the predictive performance of each of the three regression methods. In order to generate predictions, we begin by splitting our dataset into train and test data. The train data will be used to build the models, whereas the predictions will be made on the test data. Two parameters, RMSE, Root Mean Squared Error, and $R^2$ will help to determine the performance of each of the three models.The glmnet package in R is very efficient for fitting ridge, lasso, and elastic net models, for both penalized linear and logistic regression models [12]. 
+
+#Import the libraries 
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)  #for data visualization and manipulation
+library(ggplot2)   #for data visualization
+library(MASS)  #for ridge regression 
+library(broom)
+library(glmnet)  #for ridge, lasso, and elastic net regression 
+library(caret)  #to partition data into train and test sets 
+```
+
+## Exploratory analysis on the data
+
+The summary of the dependent variable shows that it has a wide range of values ranging from 1 - 843,300, with a mean of 3395. 
+
+```{r}
+#Import the dataset 
+news = read.csv("OnlineNewsPopularity.csv")
+
+#Drop non-predictive variables from the dataset
+news = subset(news, select = -c(url,timedelta))
+
+summary(news$shares)
+```
+
+```{r}
+#Split the data into train and test data 
+set.seed(123)
+split = sort(sample(nrow(news), nrow(news)*.8)) #80% train samples 
+train<-news[split,]
+test<-news[-split,]
+```
+
+We will compute the penalized logistic regression on the train data set. 
+
+```{r}
+#Specify the predictor and response variables 
+#y is the response variable --> shares
+y.train <- train$shares
+
+#x is the matrix with the predictor variables 
+x.train <- model.matrix(train$shares~., train)
+
+#Remove the intercept column that X.train generates intercept in the first column
+x.train = x.train[,-1]
+```
+
+**Ridge Regression**
+
+The set up of a ridge regression model begins by setting up the 10-fold cross-validation model to determine the tuning parameter, $\lambda$. The cross-validation model is set up by using the glmnet package in R. The parameters needed to compute the $\lambda$ value include $\alpha$ = 1, and the number of cross-validation folds.Ridge regression has a lower mean square prediction error compared to least squares [11]. When $\lambda$ is 0, the variance is the same as that computed by least squares. As $\lambda$ increases, the variance decreases, when $\lambda$ approaches $\infty$, the variance  approaches closer to 0. 
+
+In order to compute ridge regression, we set the $\alpha$ value to 0. The glmnet package fits the model and computes the tuning parameter, $\lambda$. 
+
+```{r}
+# Find the best lambda using cross-validation
+set.seed(202) 
+cv_ridge <- cv.glmnet(x.train, y.train, alpha = 0)
+# Display the best lambda value
+cv_ridge$lambda.min   
+
+# Fit the ridge regression model on the training data
+ridge <- glmnet(x.train, y.train, alpha = 0, lambda = cv_ridge$lambda.min)
+# Display regression coefficients
+coef(ridge)
+```
+
+Next, we will use the ridge regression model constructed with the train data to make predictions on the test data. 
+
+```{r}
+# Make predictions on the test data
+x.test <- model.matrix(test$shares ~., test)#[,-1]
+
+#Drop the first column from the x.test matrix which is the intercept
+x.test <- x.test[,-1]
+
+predictions_ridge <- ridge %>% predict(x.test)
+predictions_ridge
+
+# Model performance metrics
+RMSE_ridge = RMSE(predictions_ridge, test$shares)
+Rsquare_ridge = R2(predictions_ridge, test$shares)
+data.frame(RMSE = RMSE_ridge, R2 = Rsquare_ridge)
+```
+
+**Pros**
+
+1. The ridge penalty decreases the variance of the data. A decreased variance allows for better model performance.However, decrease in variance increases the bias. The bias-variance trade off allows to improve model performance. 
+2. The computational efficiency of ridge regression is higher compared to subset selection. 
+
+**Cons**
+1. The ridge penalty increases bias in the model.
+2. The ridge penalty includes all predictors in the model, unlike subset selection methods where a subset of the predictor variables are considered, not giving the user a chance to create a model using a subset of variables. 
+3. The ability to interpret from models produced using a ridge penalty is not very high. 
+
+
+**Lasso Regression**
+
+The set up of a lasso penalty is very similar to that of the ridge penalty. We set up a 10-fold  cross-validation model to determine the tuning parameter $\lambda$. Similar to ridge regression, we use the glmnet package in R to compute the $\lamnda$ value. As mentioned earlier, the key difference between ridge and lasso is the choice of $\alpha$. An $\alpha$ value of 1 is used to construct a lasso model along with the specified number of cross-validation folds. One advantage of lasso over ridge is that lasso can shrink coefficients completely to 0, unlike the ridge penalty that shrinks coefficients close to 0. Shrinking coefficients down to 0 removes unhelpful predictor variables from the model. This is similar to the subset selection method where only a subset of the predictor variables are considered. 
+
+In order to compute lasso regression, we set the $\alpha$ value to 1. The glmnet package fits the model and computes the tuning parameter, $\lambda$. 
+
+```{r}
+# Find the best lambda using cross-validation
+set.seed(123) 
+cv_lasso <- cv.glmnet(x.train, y.train, alpha = 1)
+# Display the best lambda value
+cv_lasso$lambda.min  
+
+# Fit the ridge regression model on the training data
+lasso <- glmnet(x.train, y.train, alpha = 1, lambda = cv_lasso$lambda.min)
+# Display regression coefficients
+coef(lasso)
+```
+
+Next, we will use the lasso regression model constructed with the train data to make predictions on the test data. 
+
+```{r}
+# Make predictions on the test data
+predictions_lasso <- lasso %>% predict(x.test)
+
+# Model performance metrics
+RMSE_lasso = RMSE(predictions_lasso, test$shares)
+Rsquare_lasso = R2(predictions_lasso, test$shares)
+data.frame(RMSE = RMSE_lasso, R2 = Rsquare_lasso)
+```
+
+**Pros**
+
+1. The lasso penalty can remove unhelpful predictors from the model by setting their coefficients to 0, leaving only useful predictors to improve predictive power. 
+
+2. Models generated using the lasso penalty have better interpretability compared to the ridge penalty. 
+
+3. Lasso regression is also much more computationally efficient compared to the subset selection method. 
+
+4. Lasso regression, like ridge regression, has a bias-variance trade-off, and decreases variance, thus improving model performance. 
+
+**Cons**
+
+1. Since the lasso penalty removes predictors, it increases bias by only incorporating certain predictors. 
+
+From the description and results above, we can see that the both ridge and lasso penalties have slight differences, however, have similar performance, and one does not outperform the other in all aspects. 
+
+**Elastic Net Regression**
+
+The elastic net regression penalty is slightly different than the lasso and ridge penalties. Here the $\alpha$ value can be between 0 and 1. A random $\alpha$ value between 0 and 1 can be chosen, or the caret package in R can help automatically select the best $\alpha$ and $\lambda$ parameters. A combination of the best $\alpha$ and $\lambda$ minimize the error rate. 
+
+**Pros**
+
+1. Elastic net avoids hard coding the $\alpha$ value and automatically selects the best combination of $\alpha$ and $\lambda$ values to fit the model. The RMSE and $R^2$ values are the lowest for the elastic net model, indicating that it performs better than the lasso and ridge regression models, since it results in the least prediction error. 
+
+**Cons**
+
+1. The elastic net model is computationally inefficient in comparison with lasso and ridge regression. 
+
+Elastic net can be computed using two methods. The first method will automatically compute the best alpha and lambda values. 
+
+```{r}
+#Define the model and find the best lambda using 10-fold cross validation 
+elasticnet <- train(shares ~., data = train, method = "glmnet", trControl = trainControl("cv", number = 10),  tuneLength = 10)
+
+#Compute coefficients for the model 
+coef(elasticnet$finalModel, elasticnet$bestTune$lambda) 
+#above we are getting coefficients for the best model 
+```
+
+Elastic net can also be computed using glmnet directly in R. Here we need to specify an $\alpha$ value of our choice, and the model computes the best lambda value. 
+
+```{r}
+# Find the best lambda using cross-validation
+cv_elasticnet = cv.glmnet(x = x.train, y=train$shares, alpha=0.8)
+lambda.hat = cv_elasticnet$lambda.min
+lambda.hat  
+
+# Fit the elastic net regression model on the training data
+elasticnet_glm <- glmnet(x.train, y.train, alpha = 0.8, lambda = cv_elasticnet$lambda.min)
+# Display regression coefficients
+coef(elasticnet_glm)
+```
+
+Next, we will use the elastic net regression model constructed with the train data to make predictions on the test data. 
+
+```{r}
+#Predictions on the test data 
+predictions_elasticnet <- elasticnet %>% predict(x.test)
+
+# Evaluate the model performance using RMSE and R2 metrics
+RMSE_1 = min(elasticnet$results$RMSE)  
+Rsquare_1 = min(elasticnet$results$Rsquared)
+data.frame(RMSE = RMSE_1, R2 = Rsquare_1)
+```
+
+**Performance for all 3 models**
+
+As we can see, all 3 models easily generate predictions using the glmnet package in R. In terms of model performance, we can see that the best RMSE generated using the elastic net penalty is lower than the ridge and lasso models. Both ridge and Lasso models have very close RMSE and $R^2$ values, whereas the elastic net method outperforms them in terms of RMSE. Penalized regression is easy to compute and is most helpful when we have large datasets that are multivariate. It is recommended to compute all 3 models and to proceed with the model specific to the problem and the one that produces the best predictions with the lowest RMSE. 
+
 # Dimension Reduction
 
 In the methods described so far, we have focused on feature selection and eliminating features that we decide are not significant enough for our model. However, in entirely dropping these features - however insignificant they may be - we completely miss out on any benefits these dropped variables may contribute. Instead, we could incorporate all variables strategically in order to extract as much information as possible using dimension reduction. Dimension reduction entails creating an $M$-dimensional subspace where $M$ combinations are constructed as a combination of $p$ predictors. The $M$ combinations of predictors are then used to fit a least squares linear regression model. In order to benefit from this approach, $M < p$ must hold. If $M = p$, then the resulting model amounts to using a least squares fit using all of the original predictors. We especially benefit from this approach when $p$ (number of predictors) is large relative to n (number of observations), as using $M < p$ can reduce the variance of the model. 
