@@ -190,6 +190,8 @@ Now that we understand how these principal components contribute to our model, l
     + Let’s pause here for a refresher on linear algebra:  
         + Eigenvectors represent directions and eigenvalues represent magnitude (or in this scenario, importance). Eigenvectors are stored in a dense matrix while eigenvalues are stored in a matrix with eigenvalues on the diagonal and zeros everywhere else. These eigenvalues on the diagonal are associated with the corresponding column in the eigenvector matrix. For example, an eigenvalue stored on the diagonal in the second column of its matrix corresponds to the second column in the eigenvector matrix.  
         + Luckily, there are functions in R that will compute these values for us, but it’s important to understand the eigenvectors and eigenvalues it outputs.  
+        
+![](https://media.giphy.com/media/ZThQqlxY5BXMc/source.gif)
 
 4. Sort the eigenvalues from largest to smallest  
     + Since eigenvalues correspond to their eigenvectors, the eigenvectors are similarly sorted according to the order of their corresponding eigenvalue (put another way, the columns of the eigenvector matrix are reordered according to the reordering of the eigenvalue matrix).  
@@ -251,7 +253,7 @@ summary(prcomp.fit)
 Similar to pcr(), we have a summary table with all PCs. Instead, here we have Proportion of Variance and Cumulative Proportion available to us. 
 
 Next, visualize eigenvalues (scree plot). We will use fviz_eig located within the factoextra package. Show the percentage of variances explained by each principal component. 58 is passed in for "ncp" in order to visualize all PCs. If you would like to view less, you can change this input.
-```{r}
+```{r, message=FALSE}
 library(factoextra)
 fviz_eig(prcomp.fit, ncp = 58)
 ```
@@ -354,3 +356,7 @@ PLS, PCR, and ridge regression typically perform very similarly, but for minimiz
 In summary, it is important to consider the number of predictors being used to fit your model in OLS. Commonly, not all predictors are necessary and instead can lead to overfitting. We have outlined a few methods for either removing or transforming these predictors and unfortunately, one method is not always going to be the best method - it depends on the context of your data and the problem. Ridge does tend to most frequently outperform the others, but it's important to use discretion and due diligence to test or consider a couple methods, and then perhaps compare the resulting models using MSE. 
 
 We hope you've enjoyed our tutorial!
+
+![](https://media.giphy.com/media/uWlpPGquhGZNFzY90z/giphy.gif)
+
+
