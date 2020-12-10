@@ -44,7 +44,7 @@ Before we dive into dimension reduction, we will refresh a few key concepts.
 
 **Standardizing Variables:** re-scaling variables to have mean zero and variance one. Standardizing can be especially important when variables are on widely differing scales (e.g. one feature on a percentage scale with values between zero and one and another feature measured in dollars on a scale from zero to several thousand).
 
-**Bias & Variance:** bias is a measure of how far the mean/expected value of an estimator is from the true value, or $E(\hatY) - Y$. Variance is a measure of how much the squared expected value of an estimator differs from the expected value of the squared estimator, or $E(\hatY^2) - E(\hatY)^2$. In other words, bias measures the error in the center of the estimate, and variance measures the error in the spread of the estimate. Generally, as model complexity increases, bias increases and variance decreases. This is frequently referred to as the bias-variance tradeoff.
+**Bias & Variance:** bias is a measure of how far the mean/expected value of an estimator is from the true value, or $E(\hat Y) - Y$. Variance is a measure of how much the squared expected value of an estimator differs from the expected value of the squared estimator, or $E(\hat Y^2) - E(\hat Y)^2$. In other words, bias measures the error in the center of the estimate, and variance measures the error in the spread of the estimate. Generally, as model complexity increases, bias increases and variance decreases. This is frequently referred to as the bias-variance tradeoff.
 
 **Model Selection Criteria:** Model selection criteria are used to evaluate and compare subset regression models. Common criteria used include: 
 
@@ -172,7 +172,7 @@ Principal components represent the directions of the data that explain a maximal
 
 The image below will help explain how this concept ties into principal component analysis. 
 
-![](https://builtin.com/sites/default/files/inline-images/Principal%20Component%20Analysis%20second%20principal.gif)
+![(Source: Z, Jaadi, “A Step-by-Step Explanation of Principal Component Analysis.)](https://builtin.com/sites/default/files/inline-images/Principal%20Component%20Analysis%20second%20principal.gif)
 
 The goal of principal component analysis is to compress as much information or variance in the first components, and thus the first principal component accounts for the largest variance in the dataset. 
 
@@ -208,7 +208,7 @@ Now that we understand how these principal components contribute to our model, l
         + We calculate the proportion of variance for each principal component, sort the principal components by proportion of variance explained (though they technically should already be sorted in order of importance), then plot the proportion of variance explained by each principal component.  
         + We should then have a line plot with an elbow that denotes the point at which there is the largest drop in proportion of variance explained. We then decide to use the principal components up until this drop. In the scree plot below, there is a considerable drop between proportion of variance explained in PC1 to PC2. We would therefore identify PC2 as the elbow and only include the first feature (PC1) and drop the rest. As you can see, a disadvantage of this method is that it is relatively subjective.
 
-![https://datavizpyr.com/how-to-make-scree-plot-in-r-with-ggplot2/](https://i2.wp.com/datavizpyr.com/wp-content/uploads/2020/08/Scree_plot_with_geom_line_ggplot2.png?w=600&ssl=1)
+![(Source: https://datavizpyr.com/how-to-make-scree-plot-in-r-with-ggplot2/)](https://i2.wp.com/datavizpyr.com/wp-content/uploads/2020/08/Scree_plot_with_geom_line_ggplot2.png?w=600&ssl=1)
 
 7. Use this new feature matrix with the principal components/eigenvectors we chose to keep as the new X in our linear regression model against the untransformed Y -- this type of regression using PCA is known as Principal Components Regression (PCR).  
 
@@ -237,11 +237,11 @@ summary(pcr.fit)
 ```
 From this summary, we see that the smallest RMSE at 55 components (M=55) of 11522, at which point 100% of variance is explained.
 
+More info on the `pls` package is available [here](https://cran.r-project.org/web/packages/pls/vignettes/pls-manual.pdf).
 
-Next, we can use the function prcomp() within the factoextra library for PCR. The difference in setting up pcr() vs. prcomp() is that prcomp() needs the data passed in with no response variable. Therefore, we create an X from our data, removing our response variable, shares.
+
+Next, we can use the function prcomp() within the core stats package for PCR. The difference in setting up pcr() vs. prcomp() is that prcomp() needs the data passed in with no response variable. Therefore, we create an X from our data, removing our response variable, shares.
 ```{r, message=FALSE}
-library(factoextra)
-
 X = news %>% select(-shares)
 
 prcomp.fit = prcomp(X, scale = TRUE)
@@ -250,11 +250,15 @@ summary(prcomp.fit)
 ```
 Similar to pcr(), we have a summary table with all PCs. Instead, here we have Proportion of Variance and Cumulative Proportion available to us. 
 
-Next, visualize eigenvalues (scree plot). Show the percentage of variances explained by each principal component. 58 is passed in for "ncp" in order to visualize all PCs. If you would like to view less, you can change this input.
+Next, visualize eigenvalues (scree plot). We will use fviz_eig located within the factoextra package. Show the percentage of variances explained by each principal component. 58 is passed in for "ncp" in order to visualize all PCs. If you would like to view less, you can change this input.
 ```{r}
+library(factoextra)
 fviz_eig(prcomp.fit, ncp = 58)
 ```
 
+More info on the `prcomp` is available [here](https://stat.ethz.ch/R-manual/R-devel/library/stats/html/prcomp.html).
+
+More info on the `factoextra` package is available [here](https://cran.r-project.org/web/packages/factoextra/factoextra.pdf).
 
 ## Partial Least Squares (PLS)
 
