@@ -257,6 +257,7 @@ Next, visualize eigenvalues (scree plot). We will use fviz_eig located within th
 library(factoextra)
 fviz_eig(prcomp.fit, ncp = 58)
 ```
+At this point, we could have either chosen a threshold for proportion of variance explained or rely on finding an elbow in the scree plot. Let's say we chose a threshold of 85% proportion of variance explained. We would then see that we need to add components up until PC26 (including PC26) in order to meet this threshold, and would therefore keep the PCs up until and including PC26 in the model. In contrast, if we were to use the scree plot to find the elbow, there is arguably a large drop around PC5, at which point only 31% of variance is explained. Even if we were to continue until the next drop and elbow at PC12, only 58% of variance is explained.  
 
 More info on the `prcomp` is available [here](https://stat.ethz.ch/R-manual/R-devel/library/stats/html/prcomp.html).
 
@@ -357,6 +358,6 @@ In summary, it is important to consider the number of predictors being used to f
 
 We hope you've enjoyed our tutorial!
 
-![](https://media.giphy.com/media/uWlpPGquhGZNFzY90z/giphy.gif)
+![](https://media.giphy.com/media/uWlpPGquhGZNFzY90z/giphy.gif){width=50%}
 
 
