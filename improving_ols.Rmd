@@ -258,7 +258,7 @@ In order to compute lasso regression, we set the $\alpha$ value to 1. The glmnet
 
 ```{r}
 # Find the best lambda using cross-validation
-set.seed(123) 
+set.seed(202) 
 cv_lasso <- cv.glmnet(x.train, y.train, alpha = 1)
 # Display the best lambda value
 cv_lasso$lambda.min  
@@ -313,6 +313,7 @@ Elastic net can be computed using two methods. The first method will automatical
 
 ```{r}
 #Define the model and find the best lambda using 10-fold cross validation 
+set.seed(202)
 elasticnet <- train(shares ~., data = train, method = "glmnet", trControl = trainControl("cv", number = 10),  tuneLength = 10)
 
 #Compute coefficients for the model 
@@ -324,6 +325,7 @@ Elastic net can also be computed using glmnet directly in R. Here we need to spe
 
 ```{r}
 # Find the best lambda using cross-validation
+set.seed(202)
 cv_elasticnet = cv.glmnet(x = x.train, y=train$shares, alpha=0.8)
 lambda.hat = cv_elasticnet$lambda.min
 lambda.hat  
